@@ -1,0 +1,87 @@
+var API_KEY = '6165842a-5c0d-11e3-b514-75d3313b9d05';
+
+$(document).ready(function() {
+    var peer = new Peer({key: API_KEY});
+    var chatarea = $('#chatarea');
+    var chatform = $('#chatform');
+    var chatbox = $('#chatbox');
+    var connections = [];
+
+    console.log("Matching...");
+
+    chatform.on('submit', function(e) {
+        e.preventDefault();
+        addMessage(chatbox.val());
+        sendToPeers(chatbox.val());
+        chatbox.val('');
+    });
+
+    peer.on('open', function(id) {
+        var message = 'My peer ID is: ' + id;
+        console.log(message);
+        connectToPeers();
+    });
+
+    peer.on('connection', function(conn) {
+        var message = "Connected from " + conn.peer;
+        console.log(message);
+        connections.push(conn);
+        connections = connections.filter(function (x, i, self) {
+            return self.indexOf(x) === i;
+        });
+        conn.on('data', function(data) {
+            addMessage(data);
+        });
+    });
+
+    function connectToPeers() {
+        $.ajax({
+            url: 'https://skyway.io/active/list/' + API_KEY,
+            dataType: 'json',
+            success: function(data) {
+                _connectToPeers(data);
+            },
+            error: function(data) {
+            },
+            complate: function(data) {
+            }
+        });
+    }
+
+    function _connectToPeers(peers) {
+        for (var i = 0;  i < peers.length; i++) {
+            var id = peers[i];
+            if (id == peer.id)
+                continue;
+            var conn = peer.connect(id, {serialization: 'json'});
+            var message = "Connect to " + conn.peer;
+            console.log(message);
+            conn.on('data', function(data) {
+                addMessage(data);
+            });
+            connections.push(conn);
+            connections = connections.filter(function (x, i, self) {
+                return self.indexOf(x) === i;
+            });
+        }
+    }
+
+    function sendToPeers(data) {
+        for (var i=0; i < connections.length; i++) {
+            var conn = connections[i];
+            var message = "Send '" + data + "' to " + conn.peer;
+            console.log(message);
+            conn.send(data);
+        }
+    }
+
+    function addMessage(data) {
+        var string = data;
+        chatarea.html(chatarea.html() + '<p>' + string + '</p>');
+        scrollToBottom();
+    };
+
+    function scrollToBottom() {
+        $('html,body').animate(({scrollTop: $('#footer-point').offset().top}, 'slow'));
+    }
+});
