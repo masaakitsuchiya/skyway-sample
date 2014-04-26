@@ -1,2 +1,12 @@
-#chatbox {
+body {
+    padding-top: 100px;
+}
+
+
+#chatarea .draft {
+    background: linear-gradient(transparent 60%, #c1ffff 30%);
+}
+
+#chatarea .draft-mark {
+    font-size: 12px;
 }

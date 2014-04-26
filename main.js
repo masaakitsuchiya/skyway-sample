@@ -11,9 +11,16 @@ $(document).ready(function() {
 
     chatform.on('submit', function(e) {
         e.preventDefault();
-        addMessage(chatbox.val());
-        sendToPeers(chatbox.val());
+        var data = {"peer": peer.id, "text": chatbox.val(), "draft": false};
+        parseData(data);
+        sendToPeers(data);
         chatbox.val('');
+    });
+
+    chatform.on('click blur keydown keyup keypress change', function(e) {
+        var data = {"peer": peer.id, "text": chatbox.val(), "draft": true};
+        parseData(data);
+        sendToPeers(data);
     });
 
     peer.on('open', function(id) {
@@ -30,7 +37,7 @@ $(document).ready(function() {
             return self.indexOf(x) === i;
         });
         conn.on('data', function(data) {
-            addMessage(data);
+            parseData(data);
         });
     });
 
@@ -57,7 +64,7 @@ $(document).ready(function() {
             var message = "Connect to " + conn.peer;
             console.log(message);
             conn.on('data', function(data) {
-                addMessage(data);
+                parseData(data);
             });
             connections.push(conn);
             connections = connections.filter(function (x, i, self) {
@@ -75,13 +82,47 @@ $(document).ready(function() {
         }
     }
 
-    function addMessage(data) {
-        var string = data;
-        chatarea.html(chatarea.html() + '<p>' + string + '</p>');
+
+    function parseData(data) {
+        if (data.text === undefined || data.peer === undefined) {
+            return false;
+        }
+        var draft = $('span.' + data.peer + '.draft');
+        if (data.text == '') {
+            draft.parent().remove();
+        }
+        if (draft[0]) {
+            draft.text(data.text);
+            if (data.draft == false) {
+                draft.removeClass('draft');
+                $('.'+data.peer+'.draft-mark').remove();
+                scrollToBottom();
+            }
+        } else {
+            addNewMessage(data);
+        }
+        return true;
+    }
+
+    function addNewMessage(data) {
+        chatarea.append(createMessageHtml(data));
         scrollToBottom();
-    };
+    }
+
+    function createMessageHtml(data) {
+        var html = '<p><span ' + 'class="' + data.peer;
+        if (data.draft) {
+            html += " draft";
+        }
+        html += '">' + data.text + '</span>';
+        html += "</p>";
+        return html;
+    }
 
     function scrollToBottom() {
-        $('html,body').animate(({scrollTop: $('#footer-point').offset().top}, 'slow'));
+        var p = $('#footer-point').offset().top;
+        console.log(p);
+        $('html,body').animate({scrollTop: p});
+        return false;
     }
 });
