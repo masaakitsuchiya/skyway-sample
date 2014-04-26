@@ -12,14 +12,14 @@ $(document).ready(function() {
     chatform.on('submit', function(e) {
         e.preventDefault();
         var data = {"peer": peer.id, "text": chatbox.val(), "draft": false};
-        parseData(data);
+        updateChatArea(data);
         sendToPeers(data);
         chatbox.val('');
     });
 
     chatform.on('click blur keydown keyup keypress change', function(e) {
         var data = {"peer": peer.id, "text": chatbox.val(), "draft": true};
-        parseData(data);
+        updateChatArea(data);
         sendToPeers(data);
     });
 
@@ -37,7 +37,7 @@ $(document).ready(function() {
             return self.indexOf(x) === i;
         });
         conn.on('data', function(data) {
-            parseData(data);
+            updateChatArea(data);
         });
     });
 
@@ -82,8 +82,7 @@ $(document).ready(function() {
         }
     }
 
-
-    function parseData(data) {
+    function updateChatArea(data) {
         if (data.text === undefined || data.peer === undefined) {
             return false;
         }
@@ -100,13 +99,13 @@ $(document).ready(function() {
             }
         } else {
             addNewMessage(data);
+            scrollToBottom();
         }
         return true;
     }
 
     function addNewMessage(data) {
         chatarea.append(createMessageHtml(data));
-        scrollToBottom();
     }
 
     function createMessageHtml(data) {
